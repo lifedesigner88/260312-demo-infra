@@ -1,0 +1,23 @@
+{
+    auto_https on
+}
+
+{$VUE_SPRING_DOMAIN} {
+    encode zstd gzip
+    @api path /api/*
+    handle @api {
+        reverse_proxy spring:{$SPRING_PORT}
+    }
+    handle {
+        reverse_proxy vue:{$VUE_PORT}
+    }
+}
+
+{$MINIO_DOMAIN} {
+    reverse_proxy minio:9000
+}
+
+{$RR7_FULLSTACK_DOMAIN} {
+    encode zstd gzip
+    reverse_proxy rr7-fullstack:{$RR7_FULLSTACK_PORT}
+}
