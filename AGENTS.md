@@ -12,7 +12,7 @@
   - `RESEND_API_KEY`
   - `DEMO_DATABASE_URL`
   - `DEMO_SUPABASE_KEY`
-- 나머지 데모용 값은 각 서비스 폴더의 `.env.example` 계열 파일에 둔다.
+- 나머지 데모용 값은 필요한 서비스에 한해 각 폴더의 `.env.example` 계열 파일에 둔다.
 
 ## 서비스 구조
 
@@ -22,7 +22,8 @@
 - 구성: `mariadb`, `minio`, `minio-init`, `backend`, `db-seed`, `frontend`
 - `db-seed`는 `backend`가 먼저 떠서 기본 데이터가 들어간 뒤 실행되어야 한다.
 - `frontend`는 `db-seed` 완료를 기다릴 필요가 없고 `backend`와 병렬로 떠도 된다.
-- demo 용도라 단일 `vue-spring/.env.example`에 infra, backend, frontend 값을 함께 둔다.
+- 기본 데모 실행은 별도 `.env` 없이 `vue-spring/compose.yaml`만으로 가능하다.
+- 외부 공개는 frontend 하나만 보고, `/api`, `/storage`는 frontend가 내부 프록시한다.
 - 대신 CORS 값은 실제 프론트 도메인 기준으로 맞춰야 한다.
 
 ### rr7-fullstack
@@ -39,15 +40,13 @@
 - 공유 reverse proxy다.
 - 라우팅 대상:
   - `vue-spring.huposit.kr` -> `vue-spring frontend`
-  - `vue-spring.huposit.kr/api/*` -> `vue-spring backend`
-  - `vue-spring-s3.huposit.kr` -> `vue-spring minio api`
   - `rr7-fullstack.sejongclass.kr` -> `rr7-fullstack app`
 - Caddy는 host network를 사용하고 localhost에만 바인딩된 각 서비스 포트를 프록시한다.
 
 ## 배포 원칙
 
 - Compose에서 `build`를 쓰지 않는다.
-- 앱 이미지는 모두 GHCR 이미지 변수로 받는다.
+- 앱 이미지는 GHCR에서 pull 하고, 필요한 고정값은 compose에 직접 둔다.
 - 서비스별 compose는 localhost 포트에만 publish 하고 외부 공개는 Caddy만 담당한다.
 - 실제 서버 비밀값은 루트 `.env` 한 파일로만 유지한다.
 
@@ -57,8 +56,6 @@
   - `DEPLOY_HOST`
   - `DEPLOY_USER`
   - `DEPLOY_SSH_KEY`
-  - 선택: `GHCR_USERNAME`
-  - 선택: `GHCR_TOKEN`
 - 앱 공통 시크릿:
   - `SEJONG_SECRET_KEY`
   - `RESEND_API_KEY`
@@ -70,6 +67,6 @@
 ## 수정 시 주의
 
 - `vue-spring/compose.yaml`의 seed 순서는 깨지면 안 된다.
-- `vue-spring`은 `.env.example -> .env` 복사 후 그 한 파일로 compose와 runtime을 같이 푼다.
+- `vue-spring`은 앱 기본 설정을 이미지에 두고, compose에는 배포 wiring과 필요한 infra 고정값만 남긴다.
 - 루트 `.env`는 실제 값이 들어가므로 커밋하지 않는다.
 - `caddy/Caddyfile`을 바꿀 때는 서비스 host port와 함께 봐야 한다.

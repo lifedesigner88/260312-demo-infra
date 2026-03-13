@@ -3,8 +3,6 @@
 공유 reverse proxy 배포 폴더입니다.
 
 - `vue-spring.huposit.kr` -> `vue-spring frontend`
-- `vue-spring.huposit.kr/api/*` -> `vue-spring backend`
-- `vue-spring-s3.huposit.kr` -> `vue-spring minio api`
 - `rr7-fullstack.sejongclass.kr` -> `rr7-fullstack app`
 
 ## 배포 절차

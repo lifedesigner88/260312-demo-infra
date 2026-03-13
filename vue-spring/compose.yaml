@@ -2,10 +2,14 @@ name: vue-spring
 
 services:
   mariadb:
-    image: ${MARIADB_IMAGE:-mariadb:11.4}
+    image: mariadb:11.4
+    container_name: kip-mariadb
     restart: unless-stopped
-    env_file:
-      - ${APP_ENV_FILE:-.env}
+    environment:
+      MARIADB_DATABASE: kip
+      MARIADB_USER: kip
+      MARIADB_PASSWORD: demo-password
+      MARIADB_ROOT_PASSWORD: demo-root-password
     volumes:
       - mariadb_data:/var/lib/mysql
     healthcheck:
@@ -16,85 +20,85 @@ services:
       start_period: 20s
 
   minio:
-    image: ${MINIO_IMAGE:-minio/minio:latest}
+    image: minio/minio:latest
+    container_name: kip-minio
     restart: unless-stopped
-    env_file:
-      - ${APP_ENV_FILE:-.env}
     command: server /data --console-address ":9001"
-    ports:
-      - "127.0.0.1:${MINIO_API_HOST_PORT:-9000}:9000"
-      - "127.0.0.1:${MINIO_CONSOLE_HOST_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
     volumes:
       - minio_data:/data
 
   minio-init:
-    image: ${MINIO_MC_IMAGE:-minio/mc:latest}
+    image: minio/mc:latest
+    container_name: minio-init
     restart: "no"
-    env_file:
-      - ${APP_ENV_FILE:-.env}
     depends_on:
       - minio
     entrypoint:
       - /bin/sh
       - -c
       - |
-        until /usr/bin/mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD; do
+        until /usr/bin/mc alias set local http://minio:9000 minioadmin minioadmin; do
           echo "Waiting for MinIO...";
           sleep 2;
         done;
-        /usr/bin/mc mb --ignore-existing local/$$STORAGE_BUCKET;
-        /usr/bin/mc anonymous set download local/$$STORAGE_BUCKET;
+        /usr/bin/mc mb --ignore-existing local/kip-demo;
+        /usr/bin/mc anonymous set download local/kip-demo;
 
   backend:
-    image: ${BACKEND_IMAGE}
+    image: ghcr.io/lifedesigner88/kip-backend:demo
+    container_name: kip-backend
+    pull_policy: always
     restart: unless-stopped
-    env_file:
-      - ${APP_ENV_FILE:-.env}
-      - ../.env
     depends_on:
       mariadb:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
-    ports:
-      - "127.0.0.1:${BACKEND_HOST_PORT:-8080}:${BACKEND_CONTAINER_PORT:-8080}"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ': > /dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   db-seed:
-    image: ${DB_SEED_IMAGE:-mariadb:11.4}
+    image: mariadb:11.4
+    container_name: db-seed
     restart: "no"
-    env_file:
-      - ${APP_ENV_FILE:-.env}
     depends_on:
       mariadb:
         condition: service_healthy
       backend:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - ./seed-rich.sql:/seed-rich.sql:ro
     entrypoint:
       - /bin/sh
       - -ec
       - |
-        until [ "$$(mariadb -hmariadb -P$$DB_PORT -u$$DB_USERNAME -p$$DB_PASSWORD $$DB_NAME -N -s -e 'SELECT CASE WHEN EXISTS (SELECT 1 FROM `user` WHERE employee_id = "asm-1234") AND EXISTS (SELECT 1 FROM `group` WHERE group_name = "AI SW 마에스트로") AND EXISTS (SELECT 1 FROM document WHERE title = "데모 사용 가이드" AND group_id IS NULL) THEN 1 ELSE 0 END;')" = "1" ]; do
+        until [ "$$(mariadb -hmariadb -P3306 -ukip -pdemo-password kip -N -s -e 'SELECT CASE WHEN EXISTS (SELECT 1 FROM `user` WHERE employee_id = "asm-1234") AND EXISTS (SELECT 1 FROM `group` WHERE group_name = "AI SW 마에스트로") AND EXISTS (SELECT 1 FROM document WHERE title = "데모 사용 가이드" AND group_id IS NULL) THEN 1 ELSE 0 END;')" = "1" ]; do
           echo "Waiting for backend base seed...";
           sleep 2;
         done;
-        if [ "$$(mariadb -hmariadb -P$$DB_PORT -u$$DB_USERNAME -p$$DB_PASSWORD $$DB_NAME -N -s -e 'SELECT CASE WHEN EXISTS (SELECT 1 FROM `version` WHERE message = \"seed-rich v1\") THEN 1 ELSE 0 END;')" = "1" ]; then
+        if [ "$$(mariadb -hmariadb -P3306 -ukip -pdemo-password kip -N -s -e 'SELECT CASE WHEN EXISTS (SELECT 1 FROM `version` WHERE message = "seed-rich v1") THEN 1 ELSE 0 END;')" = "1" ]; then
           echo "seed-rich data already present. Skipping.";
           exit 0;
         fi;
-        mariadb -hmariadb -P$$DB_PORT -u$$DB_USERNAME -p$$DB_PASSWORD $$DB_NAME < /seed-rich.sql
+        mariadb -hmariadb -P3306 -ukip -pdemo-password kip < /seed-rich.sql
 
   frontend:
-    image: ${FRONTEND_IMAGE}
+    image: ghcr.io/lifedesigner88/kip-frontend:demo
+    container_name: kip-frontend
+    pull_policy: always
     restart: unless-stopped
-    env_file:
-      - ${APP_ENV_FILE:-.env}
     depends_on:
       backend:
         condition: service_started
     ports:
-      - "127.0.0.1:${FRONTEND_HOST_PORT:-3000}:${FRONTEND_CONTAINER_PORT:-3000}"
+      - "127.0.0.1:3000:3000"
 
 volumes:
   mariadb_data:

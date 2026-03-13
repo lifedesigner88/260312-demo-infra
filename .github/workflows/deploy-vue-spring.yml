@@ -16,12 +16,6 @@ jobs:
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
       DEPLOY_BASE_DIR: ${{ vars.DEPLOY_BASE_DIR || '/opt/260312-demo-infra' }}
-      GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-      SEJONG_SECRET_KEY: ${{ secrets.SEJONG_SECRET_KEY }}
-      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-      DEMO_DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL }}
-      DEMO_SUPABASE_KEY: ${{ secrets.DEMO_SUPABASE_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -47,21 +41,6 @@ jobs:
         run: |
           rsync -az --delete vue-spring/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/vue-spring/"
 
-      - name: Upload shared secret env
-        run: |
-          {
-            printf 'SEJONG_SECRET_KEY=%s\n' "$SEJONG_SECRET_KEY"
-            printf 'RESEND_API_KEY=%s\n' "$RESEND_API_KEY"
-            printf 'DEMO_DATABASE_URL=%s\n' "$DEMO_DATABASE_URL"
-            printf 'DEMO_SUPABASE_KEY=%s\n' "$DEMO_SUPABASE_KEY"
-          } > /tmp/shared-root.env
-          scp /tmp/shared-root.env "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/.env"
-
-      - name: Optional GHCR login
-        if: ${{ env.GHCR_TOKEN != '' && env.GHCR_USERNAME != '' }}
-        run: |
-          printf '%s' "$GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io -u '$GHCR_USERNAME' --password-stdin"
-
       - name: Deploy vue-spring
         run: |
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_BASE_DIR/vue-spring' && ([ -f .env ] || cp .env.example .env) && docker compose --env-file .env pull && docker compose --env-file .env up -d"
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_BASE_DIR/vue-spring' && docker compose pull && docker compose up -d"
