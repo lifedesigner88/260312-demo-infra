@@ -1,0 +1,16 @@
+name: rr7-fullstack
+
+services:
+  app:
+    image: ${RR7_FULLSTACK_IMAGE}
+    restart: unless-stopped
+    env_file:
+      - ${APP_ENV_FILE:-.env}
+      - ../.env
+    ports:
+      - "127.0.0.1:${HOST_PORT}:${PORT}"
+    environment:
+      BASE_URL: ${BASE_URL}
+      PORT: ${PORT}
+      HOST_PORT: ${HOST_PORT}
+      NODE_ENV: ${NODE_ENV:-production}

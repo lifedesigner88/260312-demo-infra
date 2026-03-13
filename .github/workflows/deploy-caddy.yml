@@ -1,0 +1,60 @@
+name: Deploy caddy
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types:
+      - deploy-caddy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_BASE_DIR: ${{ vars.DEPLOY_BASE_DIR || '/opt/260312-demo-infra' }}
+      SEJONG_SECRET_KEY: ${{ secrets.SEJONG_SECRET_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      DEMO_DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL }}
+      DEMO_SUPABASE_KEY: ${{ secrets.DEMO_SUPABASE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate SSH settings
+        run: |
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Prepare remote directory
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_BASE_DIR' '$DEPLOY_BASE_DIR/caddy'"
+
+      - name: Sync caddy files
+        run: |
+          rsync -az --delete caddy/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/caddy/"
+
+      - name: Upload shared secret env
+        run: |
+          {
+            printf 'SEJONG_SECRET_KEY=%s\n' "$SEJONG_SECRET_KEY"
+            printf 'RESEND_API_KEY=%s\n' "$RESEND_API_KEY"
+            printf 'DEMO_DATABASE_URL=%s\n' "$DEMO_DATABASE_URL"
+            printf 'DEMO_SUPABASE_KEY=%s\n' "$DEMO_SUPABASE_KEY"
+          } > /tmp/shared-root.env
+          scp /tmp/shared-root.env "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/.env"
+
+      - name: Deploy caddy
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_BASE_DIR/caddy' && ([ -f .env ] || cp .env.example .env) && docker compose pull && docker compose up -d"
