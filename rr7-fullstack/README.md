@@ -24,7 +24,7 @@ docker compose up -d
 
 `.env`에서 아래 값은 실제 값으로 바꿔야 합니다.
 
-- `RR7_FULLSTACK_IMAGE`
+- `RR7_FULLSTACK_IMAGE` 기본값은 `ghcr.io/lifedesigner88/250818-sejongclass-node:latest`
 - 필요하면 `BASE_URL`
 - 앱 포트가 다르면 `PORT`와 `HOST_PORT`
 - 비시크릿 데모값
