@@ -1,0 +1,29 @@
+name: persona-mirror
+
+services:
+  frontend:
+    image: ghcr.io/lifedesigner88/persona-mirror-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${FRONTEND_HOST_PORT}:80"
+
+  backend:
+    image: ghcr.io/lifedesigner88/persona-mirror-backend:latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      BACKEND_CORS_ORIGINS: https://asm17.huposit.kr
+      AUTH_COOKIE_SECURE: "true"
+      AUTH_COOKIE_SAMESITE: none
+    ports:
+      - "127.0.0.1:${BACKEND_HOST_PORT}:8000"
+
+  ai-worker:
+    image: ghcr.io/lifedesigner88/persona-mirror-ai-worker:latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}

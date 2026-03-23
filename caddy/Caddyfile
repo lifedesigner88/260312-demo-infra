@@ -7,3 +7,16 @@
     encode zstd gzip
     reverse_proxy 127.0.0.1:{$RR7_FULLSTACK_HOST_PORT}
 }
+
+{$PERSONA_MIRROR_DOMAIN} {
+    encode zstd gzip
+
+    handle /api/* {
+        uri strip_prefix /api
+        reverse_proxy 127.0.0.1:{$PERSONA_MIRROR_BACKEND_HOST_PORT}
+    }
+
+    handle {
+        reverse_proxy 127.0.0.1:{$PERSONA_MIRROR_FRONTEND_HOST_PORT}
+    }
+}
