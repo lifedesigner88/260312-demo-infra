@@ -1,11 +1,11 @@
 # caddy
 
-공유 reverse proxy 배포 폴더입니다.
+Shared reverse proxy deployment folder.
 
 - `vue-spring.huposit.kr` -> `vue-spring frontend`
 - `rr7-fullstack.sejongclass.kr` -> `rr7-fullstack app`
 
-## 배포 절차
+## Deployment
 
 ```bash
 cd caddy
@@ -14,4 +14,4 @@ docker compose pull
 docker compose up -d
 ```
 
-Caddy는 host network를 사용하므로, 각 앱 stack이 localhost 포트에 먼저 떠 있어야 합니다.
+Caddy uses host networking, so each app stack must already be running on its localhost port before starting Caddy.

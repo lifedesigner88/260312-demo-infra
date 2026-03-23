@@ -1,19 +1,19 @@
 # rr7-fullstack
 
-`rr7-fullstack.sejongclass.kr` 요청을 받는 단일 Node 앱 배포 폴더입니다.
+Deployment folder for the single Node app serving `rr7-fullstack.sejongclass.kr`.
 
-- 앱은 1개만 띄웁니다.
-- DB는 외부를 사용합니다.
-- 비시크릿 값은 `.env.example`에 있습니다.
-- 공통 시크릿 4개는 루트 `../.env`에서 읽습니다.
-- 외부 공개와 TLS는 shared `caddy/`가 담당합니다.
+- Runs a single app container.
+- Uses an external database.
+- Non-secret values are in `.env.example`.
+- The 4 shared secrets are read from the root `../.env`.
+- Public exposure and TLS are handled by the shared `caddy/`.
 
-## 포함 파일
+## Included Files
 
-- `compose.yaml`: Node 앱을 localhost 포트에만 바인딩하는 compose
-- `.env.example`: 새 환경용 템플릿
+- `compose.yaml`: Compose file that binds the Node app to a localhost port only.
+- `.env.example`: Template for new environments.
 
-## 배포 절차
+## Deployment
 
 ```bash
 cd rr7-fullstack
@@ -22,14 +22,14 @@ docker compose pull
 docker compose up -d
 ```
 
-`.env`에서 아래 값은 실제 값으로 바꿔야 합니다.
+Replace the following values in `.env` with real values:
 
-- `RR7_FULLSTACK_IMAGE` 기본값은 `ghcr.io/lifedesigner88/250818-sejongclass-node:latest`
-- 필요하면 `BASE_URL`
-- 앱 포트가 다르면 `PORT`와 `HOST_PORT`
-- 비시크릿 데모값
+- `RR7_FULLSTACK_IMAGE` — default is `ghcr.io/lifedesigner88/250818-sejongclass-node:latest`
+- `BASE_URL` — if needed
+- `PORT` and `HOST_PORT` — if the app port differs
+- Non-secret demo values as required
 
-상태 확인:
+Check status:
 
 ```bash
 docker compose ps
