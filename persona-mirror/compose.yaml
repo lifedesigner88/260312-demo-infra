@@ -15,6 +15,7 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM: noreply@sejongclass.kr
       BACKEND_CORS_ORIGINS: https://asm17.huposit.kr
       AUTH_COOKIE_SECURE: "true"
       AUTH_COOKIE_SAMESITE: none
