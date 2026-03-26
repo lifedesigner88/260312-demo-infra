@@ -19,6 +19,7 @@ jobs:
       PERSONA_MIRROR_DATABASE_URL: ${{ secrets.PERSONA_MIRROR_DATABASE_URL }}
       PERSONA_MIRROR_JWT_SECRET_KEY: ${{ secrets.PERSONA_MIRROR_JWT_SECRET_KEY }}
       PERSONA_MIRROR_ANTHROPIC_API_KEY: ${{ secrets.PERSONA_MIRROR_ANTHROPIC_API_KEY }}
+      PERSONA_MIRROR_OPENAI_API_KEY: ${{ secrets.PERSONA_MIRROR_OPENAI_API_KEY }}
       PERSONA_MIRROR_RESEND_API_KEY: ${{ secrets.PERSONA_MIRROR_RESEND_API_KEY }}
     steps:
       - uses: actions/checkout@v4
@@ -53,6 +54,7 @@ jobs:
             printf 'DATABASE_URL=%s\n' "$PERSONA_MIRROR_DATABASE_URL"
             printf 'JWT_SECRET_KEY=%s\n' "$PERSONA_MIRROR_JWT_SECRET_KEY"
             printf 'ANTHROPIC_API_KEY=%s\n' "$PERSONA_MIRROR_ANTHROPIC_API_KEY"
+            printf 'OPENAI_API_KEY=%s\n' "$PERSONA_MIRROR_OPENAI_API_KEY"
             printf 'RESEND_API_KEY=%s\n' "$PERSONA_MIRROR_RESEND_API_KEY"
           } > /tmp/persona-mirror.env
           scp /tmp/persona-mirror.env "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/persona-mirror/.env"
