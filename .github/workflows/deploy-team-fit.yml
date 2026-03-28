@@ -1,0 +1,98 @@
+name: Deploy team-fit
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types:
+      - deploy-team-fit
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_BASE_DIR: ${{ vars.DEPLOY_BASE_DIR || '/opt/260312-demo-infra' }}
+      TEAM_FIT_DATABASE_URL: ${{ secrets.TEAM_FIT_DATABASE_URL }}
+      TEAM_FIT_JWT_SECRET_KEY: ${{ secrets.TEAM_FIT_JWT_SECRET_KEY }}
+      TEAM_FIT_ANTHROPIC_API_KEY: ${{ secrets.TEAM_FIT_ANTHROPIC_API_KEY }}
+      TEAM_FIT_OPENAI_API_KEY: ${{ secrets.TEAM_FIT_OPENAI_API_KEY }}
+      TEAM_FIT_RESEND_API_KEY: ${{ secrets.TEAM_FIT_RESEND_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate SSH settings
+        run: |
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+
+      - name: Validate team-fit secrets
+        run: |
+          test -n "$TEAM_FIT_DATABASE_URL"
+          test -n "$TEAM_FIT_JWT_SECRET_KEY"
+          test -n "$TEAM_FIT_RESEND_API_KEY"
+          jwt_bytes=$(printf '%s' "$TEAM_FIT_JWT_SECRET_KEY" | wc -c)
+          if [ "$jwt_bytes" -lt 32 ]; then
+            echo "TEAM_FIT_JWT_SECRET_KEY must be at least 32 bytes" >&2
+            exit 1
+          fi
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Stop legacy stacks
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "set -eu
+          for legacy_dir in '$DEPLOY_BASE_DIR/persona-mirror' '$DEPLOY_BASE_DIR/find-team-fit'; do
+            if [ -f \"\$legacy_dir/compose.yaml\" ]; then
+              project=\$(basename \"\$legacy_dir\")
+              docker compose -f \"\$legacy_dir/compose.yaml\" -p \"\$project\" down --remove-orphans || true
+            fi
+          done
+          for legacy_container in \
+            persona-mirror-frontend persona-mirror-backend persona-mirror-ai-worker \
+            find-team-fit-frontend find-team-fit-backend find-team-fit-ai-worker \
+            persona-mirror-frontend-1 persona-mirror-backend-1 persona-mirror-ai-worker-1 \
+            find-team-fit-frontend-1 find-team-fit-backend-1 find-team-fit-ai-worker-1; do
+            docker rm -f \"\$legacy_container\" >/dev/null 2>&1 || true
+          done
+          docker network rm persona-mirror_default find-team-fit_default >/dev/null 2>&1 || true"
+
+      - name: Prepare remote directory
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_BASE_DIR' '$DEPLOY_BASE_DIR/team-fit'"
+
+      - name: Sync team-fit files
+        run: |
+          rsync -az --delete team-fit/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/team-fit/"
+
+      - name: Write .env
+        run: |
+          {
+            printf 'FRONTEND_HOST_PORT=3200\n'
+            printf 'BACKEND_HOST_PORT=8200\n'
+            printf 'BACKEND_CORS_ORIGINS=https://asm17.huposit.kr\n'
+            printf 'BACKEND_PORT=8000\n'
+            printf 'DATABASE_URL=%s\n' "$TEAM_FIT_DATABASE_URL"
+            printf 'JWT_SECRET_KEY=%s\n' "$TEAM_FIT_JWT_SECRET_KEY"
+            printf 'AUTH_COOKIE_SAMESITE=none\n'
+            printf 'AUTH_COOKIE_SECURE=true\n'
+            printf 'ANTHROPIC_API_KEY=%s\n' "$TEAM_FIT_ANTHROPIC_API_KEY"
+            printf 'OPENAI_API_KEY=%s\n' "$TEAM_FIT_OPENAI_API_KEY"
+            printf 'RESEND_API_KEY=%s\n' "$TEAM_FIT_RESEND_API_KEY"
+            printf 'RESEND_FROM=noreply@sejongclass.kr\n'
+          } > /tmp/team-fit.env
+          scp /tmp/team-fit.env "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/team-fit/.env"
+
+      - name: Deploy team-fit
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_BASE_DIR/team-fit' && docker compose pull && docker compose up -d"

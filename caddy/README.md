@@ -4,6 +4,7 @@ Shared reverse proxy deployment folder.
 
 - `vue-spring.huposit.kr` -> `vue-spring frontend`
 - `rr7-fullstack.sejongclass.kr` -> `rr7-fullstack app`
+- `asm17.huposit.kr` -> `team-fit frontend` with `/api` routed to `team-fit backend`
 
 ## Deployment
 

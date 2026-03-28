@@ -1,6 +1,6 @@
 # 260312-demo-infra
 
-Infrastructure repository for running two demo apps and a shared Caddy reverse proxy via GitHub Actions + SSH + Docker Compose.
+Infrastructure repository for running demo apps and a shared Caddy reverse proxy via GitHub Actions + SSH + Docker Compose.
 
 This repo does not build app images directly. It pulls images built in each app repo from GHCR, then injects environment variables on the server at runtime.
 
@@ -23,9 +23,14 @@ This file is gitignored; the tracking template lives at the root `.env.example`.
 - `rr7-fullstack/`
   - A single Node app using an external database.
   - Non-secret values are in `.env.example`; shared secrets come from the root `.env`.
+- `team-fit/`
+  - Frontend, backend, and ai-worker are pulled from the `asm17-team-fit` app repo's GHCR images.
+  - Compose, container, and runtime naming use `team-fit`, while the GitHub repo slug remains `asm17-team-fit`.
+  - Caddy publishes `asm17.huposit.kr`, routing `/api` to the backend and other traffic to the frontend.
 - `caddy/`
   - `vue-spring.huposit.kr`
   - `rr7-fullstack.sejongclass.kr`
+  - `asm17.huposit.kr`
   - Shared reverse proxy that routes the above domains to localhost ports.
 - `.github/workflows/`
   - Deployment workflows that sync each folder to the server via SSH and run `docker compose pull && docker compose up -d`.
@@ -44,5 +49,6 @@ This file is gitignored; the tracking template lives at the root `.env.example`.
 
 - `vue-spring` deployment notes: `vue-spring/README.md`
 - `rr7-fullstack` deployment notes: `rr7-fullstack/README.md`
+- `team-fit` deployment notes: `team-fit/README.md`
 - `caddy` deployment notes: `caddy/README.md`
 - Automation/context documentation: `AGENTS.md`
