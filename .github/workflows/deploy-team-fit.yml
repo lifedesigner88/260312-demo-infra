@@ -21,6 +21,7 @@ jobs:
       TEAM_FIT_ANTHROPIC_API_KEY: ${{ secrets.TEAM_FIT_ANTHROPIC_API_KEY }}
       TEAM_FIT_OPENAI_API_KEY: ${{ secrets.TEAM_FIT_OPENAI_API_KEY }}
       TEAM_FIT_RESEND_API_KEY: ${{ secrets.TEAM_FIT_RESEND_API_KEY }}
+      TEAM_FIT_VERIFICATION_AUTO_APPROVE_INVITE_CODES: ${{ secrets.TEAM_FIT_VERIFICATION_AUTO_APPROVE_INVITE_CODES }}
     steps:
       - uses: actions/checkout@v4
 
@@ -35,6 +36,7 @@ jobs:
           test -n "$TEAM_FIT_DATABASE_URL"
           test -n "$TEAM_FIT_JWT_SECRET_KEY"
           test -n "$TEAM_FIT_RESEND_API_KEY"
+          test -n "$TEAM_FIT_VERIFICATION_AUTO_APPROVE_INVITE_CODES"
           jwt_bytes=$(printf '%s' "$TEAM_FIT_JWT_SECRET_KEY" | wc -c)
           if [ "$jwt_bytes" -lt 32 ]; then
             echo "TEAM_FIT_JWT_SECRET_KEY must be at least 32 bytes" >&2
@@ -87,6 +89,7 @@ jobs:
             printf 'ANTHROPIC_API_KEY=%s\n' "$TEAM_FIT_ANTHROPIC_API_KEY"
             printf 'OPENAI_API_KEY=%s\n' "$TEAM_FIT_OPENAI_API_KEY"
             printf 'RESEND_API_KEY=%s\n' "$TEAM_FIT_RESEND_API_KEY"
+            printf 'VERIFICATION_AUTO_APPROVE_INVITE_CODES=%s\n' "$TEAM_FIT_VERIFICATION_AUTO_APPROVE_INVITE_CODES"
             printf 'RESEND_FROM=noreply@sejongclass.kr\n'
           } > /tmp/team-fit.env
           scp /tmp/team-fit.env "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/team-fit/.env"
