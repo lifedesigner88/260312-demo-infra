@@ -52,20 +52,18 @@ jobs:
       - name: Stop legacy stacks
         run: |
           ssh "$DEPLOY_USER@$DEPLOY_HOST" "set -eu
-          for legacy_dir in '$DEPLOY_BASE_DIR/persona-mirror' '$DEPLOY_BASE_DIR/find-team-fit'; do
+          for legacy_dir in '$DEPLOY_BASE_DIR/find-team-fit'; do
             if [ -f \"\$legacy_dir/compose.yaml\" ]; then
               project=\$(basename \"\$legacy_dir\")
               docker compose -f \"\$legacy_dir/compose.yaml\" -p \"\$project\" down --remove-orphans || true
             fi
           done
           for legacy_container in \
-            persona-mirror-frontend persona-mirror-backend persona-mirror-ai-worker \
             find-team-fit-frontend find-team-fit-backend find-team-fit-ai-worker \
-            persona-mirror-frontend-1 persona-mirror-backend-1 persona-mirror-ai-worker-1 \
             find-team-fit-frontend-1 find-team-fit-backend-1 find-team-fit-ai-worker-1; do
             docker rm -f \"\$legacy_container\" >/dev/null 2>&1 || true
           done
-          docker network rm persona-mirror_default find-team-fit_default >/dev/null 2>&1 || true"
+          docker network rm find-team-fit_default >/dev/null 2>&1 || true"
 
       - name: Prepare remote directory
         run: |
