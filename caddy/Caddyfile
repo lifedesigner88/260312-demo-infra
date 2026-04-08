@@ -20,3 +20,16 @@
         reverse_proxy 127.0.0.1:{$TEAM_FIT_FRONTEND_HOST_PORT}
     }
 }
+
+{$TEAM_310_DOMAIN} {
+    encode zstd gzip
+
+    handle /api/* {
+        uri strip_prefix /api
+        reverse_proxy 127.0.0.1:{$TEAM_310_BACKEND_HOST_PORT}
+    }
+
+    handle {
+        reverse_proxy 127.0.0.1:{$TEAM_310_FRONTEND_HOST_PORT}
+    }
+}

@@ -27,10 +27,16 @@ This file is gitignored; the tracking template lives at the root `.env.example`.
   - Frontend, backend, and ai-worker are pulled from the `asm17-team-fit` app repo's GHCR images.
   - Compose, container, and runtime naming use `team-fit`, while the GitHub repo slug remains `asm17-team-fit`.
   - Caddy publishes `asm17.huposit.kr`, routing `/api` to the backend and other traffic to the frontend.
+- `team-310/`
+  - Frontend, backend, and ai-worker are pulled from the `team-310` app repo's GHCR images.
+  - Compose, container, and runtime naming use `team-310`.
+  - Caddy publishes `team-310.huposit.kr`, routing `/api` to the backend and other traffic to the frontend.
+  - The frontend image must be built with `VITE_API_BASE_URL=/api` for this proxy pattern to work correctly.
 - `caddy/`
   - `vue-spring.huposit.kr`
   - `rr7-fullstack.sejongclass.kr`
   - `asm17.huposit.kr`
+  - `team-310.huposit.kr`
   - Shared reverse proxy that routes the above domains to localhost ports.
 - `.github/workflows/`
   - Deployment workflows that sync each folder to the server via SSH and run `docker compose pull && docker compose up -d`.
@@ -50,5 +56,6 @@ This file is gitignored; the tracking template lives at the root `.env.example`.
 - `vue-spring` deployment notes: `vue-spring/README.md`
 - `rr7-fullstack` deployment notes: `rr7-fullstack/README.md`
 - `team-fit` deployment notes: `team-fit/README.md`
+- `team-310` deployment notes: `team-310/README.md`
 - `caddy` deployment notes: `caddy/README.md`
 - Automation/context documentation: `AGENTS.md`

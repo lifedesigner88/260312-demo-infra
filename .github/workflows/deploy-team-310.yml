@@ -1,0 +1,86 @@
+name: Deploy team-310
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types:
+      - deploy-team-310
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_BASE_DIR: ${{ vars.DEPLOY_BASE_DIR || '/opt/260312-demo-infra' }}
+      TEAM_310_DATABASE_URL: ${{ secrets.TEAM_310_DATABASE_URL }}
+      TEAM_310_JWT_SECRET_KEY: ${{ secrets.TEAM_310_JWT_SECRET_KEY }}
+      TEAM_310_RESEND_API_KEY: ${{ secrets.TEAM_310_RESEND_API_KEY }}
+      TEAM_310_ANTHROPIC_API_KEY: ${{ secrets.TEAM_310_ANTHROPIC_API_KEY }}
+      TEAM_310_OPENAI_API_KEY: ${{ secrets.TEAM_310_OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate SSH settings
+        run: |
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+
+      - name: Validate team-310 secrets
+        run: |
+          test -n "$TEAM_310_DATABASE_URL"
+          test -n "$TEAM_310_JWT_SECRET_KEY"
+          test -n "$TEAM_310_RESEND_API_KEY"
+          test -n "$TEAM_310_ANTHROPIC_API_KEY"
+          test -n "$TEAM_310_OPENAI_API_KEY"
+          jwt_bytes=$(printf '%s' "$TEAM_310_JWT_SECRET_KEY" | wc -c)
+          if [ "$jwt_bytes" -lt 32 ]; then
+            echo "TEAM_310_JWT_SECRET_KEY must be at least 32 bytes" >&2
+            exit 1
+          fi
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Prepare remote directory
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_BASE_DIR' '$DEPLOY_BASE_DIR/team-310'"
+
+      - name: Sync team-310 files
+        run: |
+          rsync -az --delete team-310/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/team-310/"
+
+      - name: Write .env
+        run: |
+          {
+            printf 'FRONTEND_HOST_PORT=3310\n'
+            printf 'BACKEND_HOST_PORT=8310\n'
+            printf 'BACKEND_PORT=8310\n'
+            printf 'BACKEND_CORS_ORIGINS=https://team-310.huposit.kr\n'
+            printf 'DATABASE_URL=%s\n' "$TEAM_310_DATABASE_URL"
+            printf 'JWT_SECRET_KEY=%s\n' "$TEAM_310_JWT_SECRET_KEY"
+            printf 'AUTH_COOKIE_NAME=team_310_access_token\n'
+            printf 'AUTH_COOKIE_SAMESITE=lax\n'
+            printf 'AUTH_COOKIE_SECURE=true\n'
+            printf 'JWT_EXPIRE_MINUTES=60\n'
+            printf 'RESEND_API_KEY=%s\n' "$TEAM_310_RESEND_API_KEY"
+            printf 'RESEND_FROM=noreply@sejongclass.kr\n'
+            printf 'POLL_INTERVAL_SECONDS=3\n'
+            printf 'USD_TO_KRW_RATE=1450\n'
+            printf 'ANTHROPIC_API_KEY=%s\n' "$TEAM_310_ANTHROPIC_API_KEY"
+            printf 'OPENAI_API_KEY=%s\n' "$TEAM_310_OPENAI_API_KEY"
+          } > /tmp/team-310.env
+          scp /tmp/team-310.env "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/team-310/.env"
+
+      - name: Deploy team-310
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_BASE_DIR/team-310' && docker compose pull && docker compose up -d"
