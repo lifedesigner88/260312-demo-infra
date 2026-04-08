@@ -31,7 +31,7 @@ This file is gitignored; the tracking template lives at the root `.env.example`.
   - Frontend, backend, and ai-worker are pulled from the `team-310` app repo's GHCR images.
   - Compose, container, and runtime naming use `team-310`.
   - Caddy publishes `huposit.kr`, routing `/api` to the backend and other traffic to the frontend.
-  - The frontend image must be built with `VITE_API_BASE_URL=/api` for this proxy pattern to work correctly.
+  - Current upstream images are expected to include the `/api` frontend base and `/api/auth/*` backend routes introduced by `d6cac06`.
 - `caddy/`
   - `vue-spring.huposit.kr`
   - `rr7-fullstack.sejongclass.kr`

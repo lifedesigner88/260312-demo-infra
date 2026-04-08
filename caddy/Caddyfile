@@ -25,7 +25,6 @@
     encode zstd gzip
 
     handle /api/* {
-        uri strip_prefix /api
         reverse_proxy 127.0.0.1:{$TEAM_310_BACKEND_HOST_PORT}
     }
 
