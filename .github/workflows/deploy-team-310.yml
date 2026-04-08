@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: read
     env:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -21,6 +22,8 @@ jobs:
       TEAM_310_RESEND_API_KEY: ${{ secrets.TEAM_310_RESEND_API_KEY }}
       TEAM_310_ANTHROPIC_API_KEY: ${{ secrets.TEAM_310_ANTHROPIC_API_KEY }}
       TEAM_310_OPENAI_API_KEY: ${{ secrets.TEAM_310_OPENAI_API_KEY }}
+      TEAM_310_GHCR_USERNAME: ${{ secrets.TEAM_310_GHCR_USERNAME }}
+      TEAM_310_GHCR_TOKEN: ${{ secrets.TEAM_310_GHCR_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +40,8 @@ jobs:
           test -n "$TEAM_310_RESEND_API_KEY"
           test -n "$TEAM_310_ANTHROPIC_API_KEY"
           test -n "$TEAM_310_OPENAI_API_KEY"
+          test -n "$TEAM_310_GHCR_USERNAME"
+          test -n "$TEAM_310_GHCR_TOKEN"
           jwt_bytes=$(printf '%s' "$TEAM_310_JWT_SECRET_KEY" | wc -c)
           if [ "$jwt_bytes" -lt 32 ]; then
             echo "TEAM_310_JWT_SECRET_KEY must be at least 32 bytes" >&2
@@ -80,6 +85,10 @@ jobs:
             printf 'OPENAI_API_KEY=%s\n' "$TEAM_310_OPENAI_API_KEY"
           } > /tmp/team-310.env
           scp /tmp/team-310.env "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/team-310/.env"
+
+      - name: Log in to GHCR on remote host
+        run: |
+          printf '%s' "$TEAM_310_GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io -u '$TEAM_310_GHCR_USERNAME' --password-stdin"
 
       - name: Deploy team-310
         run: |
