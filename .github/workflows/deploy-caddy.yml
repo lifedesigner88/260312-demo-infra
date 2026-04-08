@@ -45,6 +45,23 @@ jobs:
         run: |
           rsync -az --delete caddy/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/caddy/"
 
+      - name: Write caddy env
+        run: |
+          {
+            printf 'CADDY_IMAGE=caddy:2-alpine\n'
+            printf 'VUE_SPRING_DOMAIN=vue-spring.huposit.kr\n'
+            printf 'VUE_SPRING_FRONTEND_HOST_PORT=3000\n'
+            printf 'RR7_FULLSTACK_DOMAIN=rr7-fullstack.sejongclass.kr\n'
+            printf 'RR7_FULLSTACK_HOST_PORT=5173\n'
+            printf 'TEAM_FIT_DOMAIN=asm17.huposit.kr\n'
+            printf 'TEAM_FIT_FRONTEND_HOST_PORT=3200\n'
+            printf 'TEAM_FIT_BACKEND_HOST_PORT=8200\n'
+            printf 'TEAM_310_DOMAIN=huposit.kr\n'
+            printf 'TEAM_310_FRONTEND_HOST_PORT=3310\n'
+            printf 'TEAM_310_BACKEND_HOST_PORT=8310\n'
+          } > /tmp/caddy.env
+          scp /tmp/caddy.env "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/caddy/.env"
+
       - name: Upload shared secret env
         run: |
           {
@@ -57,4 +74,4 @@ jobs:
 
       - name: Deploy caddy
         run: |
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_BASE_DIR/caddy' && ([ -f .env ] || cp .env.example .env) && docker compose pull && docker compose up -d"
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_BASE_DIR/caddy' && docker compose pull && docker compose up -d"

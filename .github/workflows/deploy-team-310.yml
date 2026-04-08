@@ -70,7 +70,7 @@ jobs:
             printf 'FRONTEND_HOST_PORT=3310\n'
             printf 'BACKEND_HOST_PORT=8310\n'
             printf 'BACKEND_PORT=8310\n'
-            printf 'BACKEND_CORS_ORIGINS=https://team-310.huposit.kr\n'
+            printf 'BACKEND_CORS_ORIGINS=https://huposit.kr\n'
             printf 'DATABASE_URL=%s\n' "$TEAM_310_DATABASE_URL"
             printf 'JWT_SECRET_KEY=%s\n' "$TEAM_310_JWT_SECRET_KEY"
             printf 'AUTH_COOKIE_NAME=team_310_access_token\n'

@@ -8,7 +8,7 @@ Deployment folder for the `team-310` demo stack.
 - `ghcr.io/lifedesigner88/team-310-backend:latest`
 - `ghcr.io/lifedesigner88/team-310-ai-worker:latest`
 - Compose, network, and container naming use `team-310`.
-- Caddy publishes `team-310.huposit.kr`, routing `/api` to the backend and other traffic to the frontend.
+- Caddy publishes `huposit.kr`, routing `/api` to the backend and other traffic to the frontend.
 
 ## Important
 

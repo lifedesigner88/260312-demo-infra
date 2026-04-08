@@ -41,6 +41,8 @@
 - 라우팅 대상:
   - `vue-spring.huposit.kr` -> `vue-spring frontend`
   - `rr7-fullstack.sejongclass.kr` -> `rr7-fullstack app`
+  - `asm17.huposit.kr` -> `team-fit frontend`
+  - `huposit.kr` -> `team-310 frontend`
 - Caddy는 host network를 사용하고 localhost에만 바인딩된 각 서비스 포트를 프록시한다.
 
 ## 배포 원칙
