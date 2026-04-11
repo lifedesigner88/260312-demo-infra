@@ -1,34 +1,38 @@
 {$VUE_SPRING_DOMAIN} {
-    encode zstd gzip
-    reverse_proxy 127.0.0.1:{$VUE_SPRING_FRONTEND_HOST_PORT}
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:{$VUE_SPRING_FRONTEND_HOST_PORT}
 }
 
 {$RR7_FULLSTACK_DOMAIN} {
-    encode zstd gzip
-    reverse_proxy 127.0.0.1:{$RR7_FULLSTACK_HOST_PORT}
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:{$RR7_FULLSTACK_HOST_PORT}
 }
 
 {$TEAM_FIT_DOMAIN} {
-    encode zstd gzip
+	encode zstd gzip
 
-    handle /api/* {
-        uri strip_prefix /api
-        reverse_proxy 127.0.0.1:{$TEAM_FIT_BACKEND_HOST_PORT}
-    }
+	handle /api/* {
+		uri strip_prefix /api
+		reverse_proxy 127.0.0.1:{$TEAM_FIT_BACKEND_HOST_PORT}
+	}
 
-    handle {
-        reverse_proxy 127.0.0.1:{$TEAM_FIT_FRONTEND_HOST_PORT}
-    }
+	handle {
+		reverse_proxy 127.0.0.1:{$TEAM_FIT_FRONTEND_HOST_PORT}
+	}
 }
 
 {$TEAM_310_DOMAIN} {
-    encode zstd gzip
+	encode zstd gzip
 
-    handle /api/* {
-        reverse_proxy 127.0.0.1:{$TEAM_310_BACKEND_HOST_PORT}
-    }
+	@team_310_api {
+		path /api /api/*
+	}
 
-    handle {
-        reverse_proxy 127.0.0.1:{$TEAM_310_FRONTEND_HOST_PORT}
-    }
+	handle @team_310_api {
+		reverse_proxy 127.0.0.1:{$TEAM_310_BACKEND_HOST_PORT}
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:{$TEAM_310_FRONTEND_HOST_PORT}
+	}
 }

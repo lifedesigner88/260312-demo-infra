@@ -3,26 +3,53 @@
 Deployment folder for the `team-310` demo stack.
 
 - Source app repo: `https://github.com/lifedesigner88/team-310`
-- GHCR images:
-- `ghcr.io/lifedesigner88/team-310-frontend:latest`
-- `ghcr.io/lifedesigner88/team-310-backend:latest`
-- `ghcr.io/lifedesigner88/team-310-ai-worker:latest`
+- Frontend image: `ghcr.io/lifedesigner88/team-310-frontend:${TEAM_310_IMAGE_TAG}`
+- Backend image: `ghcr.io/lifedesigner88/team-310-backend:${TEAM_310_IMAGE_TAG}`
+- AI worker image: `ghcr.io/lifedesigner88/team-310-ai-worker:${TEAM_310_IMAGE_TAG}`
 - Compose, network, and container naming use `team-310`.
-- Caddy publishes `huposit.kr`, routing `/api` to the backend and other traffic to the frontend.
+- Caddy publishes `huposit.kr`, routing `/api` and `/api/*` to the backend without stripping the prefix and routing everything else to the frontend.
 
-## Important
+## Runtime contract
 
-This deployment expects current upstream GHCR images built after `d6cac06`, where:
+- `frontend`
+  - nginx serves static assets on container port `80`
+  - same-origin API calls go to `/api`
+- `backend`
+  - listens on container port `8310`
+  - is exposed only on localhost and should be reached publicly through Caddy `/api` and `/api/*`
+  - bootstraps the PostgreSQL schema on startup
+- `ai-worker`
+  - has no public port
+  - must share the same `DATABASE_URL` as the backend
+  - needs the same Supabase Storage settings as the backend
+  - needs `OPENAI_API_KEY` for the encounter demo worker flow
+  - can also use `ANTHROPIC_API_KEY` for Anthropic chat models if you want that path enabled
 
-- the frontend defaults `VITE_API_BASE_URL` to `/api`
-- auth routes are served under `/api/auth/*`
-- chat routes are served under `/api/chat/*`
+## Required env
 
-Because of that, the shared Caddy route must proxy `team-310` `/api/*` requests to the backend without stripping the `/api` prefix.
+- `TEAM_310_IMAGE_TAG`
+  - Use `main` for the moving head or `sha-<shortsha>` for a pinned rollout.
+- `DATABASE_URL`
+  - Shared by backend and ai-worker.
+- `JWT_SECRET_KEY`
+  - Must be at least 32 bytes.
+- `RESEND_API_KEY`
+- `RESEND_FROM`
+- `FRONTEND_APP_URL`
+- `SUPABASE_URL`
+- `SUPABASE_SECRET_KEY`
+- `SUPABASE_STORAGE_BUCKET`
+  - Defaults to `encounter-audio`.
+- `OPENAI_API_KEY`
+  - Required only by `ai-worker`.
+- `ANTHROPIC_API_KEY`
+  - Optional for Anthropic chat models in `ai-worker`.
+- `TEAM310_RESET_DB_ON_BOOTSTRAP`
+  - Keep `false` in production.
 
-The ai-worker image fix landed upstream in `66d4517`, so redeploying against refreshed GHCR `latest` images should pick up the corrected Docker entrypoint without any infra-side build changes.
+`LOCAL_STORAGE_ROOT` is intentionally not configured in this deployment bundle, so production uses Supabase Storage instead of filesystem fallback.
 
-If the `team-310` GHCR packages are private, the deployment workflow also needs `TEAM_310_GHCR_USERNAME` and `TEAM_310_GHCR_TOKEN` secrets so the remote server can run `docker login ghcr.io` before `docker compose pull`.
+If the `team-310` GHCR packages are private, the deployment workflow can also use `TEAM_310_GHCR_USERNAME` and `TEAM_310_GHCR_TOKEN` before `docker compose pull`.
 
 ## Deployment
 

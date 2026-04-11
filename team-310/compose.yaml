@@ -2,40 +2,55 @@ name: team-310
 
 services:
   frontend:
-    image: ghcr.io/lifedesigner88/team-310-frontend:latest
+    image: ghcr.io/lifedesigner88/team-310-frontend:${TEAM_310_IMAGE_TAG:-main}
     container_name: team-310-frontend
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${FRONTEND_HOST_PORT}:80"
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-3310}:80"
 
   backend:
-    image: ghcr.io/lifedesigner88/team-310-backend:latest
+    image: ghcr.io/lifedesigner88/team-310-backend:${TEAM_310_IMAGE_TAG:-main}
     container_name: team-310-backend
     restart: unless-stopped
     environment:
-      DATABASE_URL:
-      JWT_SECRET_KEY:
-      BACKEND_CORS_ORIGINS:
-      BACKEND_PORT:
-      AUTH_COOKIE_NAME:
-      AUTH_COOKIE_SAMESITE:
-      AUTH_COOKIE_SECURE:
-      JWT_EXPIRE_MINUTES:
-      RESEND_API_KEY:
-      RESEND_FROM:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      BACKEND_PORT: ${BACKEND_PORT:-8310}
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-https://huposit.kr}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-60}
+      AUTH_COOKIE_NAME: ${AUTH_COOKIE_NAME:-team_310_access_token}
+      AUTH_COOKIE_SAMESITE: ${AUTH_COOKIE_SAMESITE:-lax}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
+      RESEND_API_KEY: ${RESEND_API_KEY:?RESEND_API_KEY is required}
+      RESEND_FROM: ${RESEND_FROM:-noreply@sejongclass.kr}
+      FRONTEND_APP_URL: ${FRONTEND_APP_URL:-https://huposit.kr}
+      SUPABASE_URL: ${SUPABASE_URL:?SUPABASE_URL is required}
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:?SUPABASE_SECRET_KEY is required}
+      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-encounter-audio}
+      TEAM310_RESET_DB_ON_BOOTSTRAP: ${TEAM310_RESET_DB_ON_BOOTSTRAP:-false}
     ports:
-      - "127.0.0.1:${BACKEND_HOST_PORT}:${BACKEND_PORT}"
+      - "127.0.0.1:${BACKEND_HOST_PORT:-8310}:8310"
 
   ai-worker:
-    image: ghcr.io/lifedesigner88/team-310-ai-worker:latest
+    image: ghcr.io/lifedesigner88/team-310-ai-worker:${TEAM_310_IMAGE_TAG:-main}
     container_name: team-310-ai-worker
     restart: unless-stopped
     environment:
-      DATABASE_URL:
-      POLL_INTERVAL_SECONDS:
-      USD_TO_KRW_RATE:
-      ANTHROPIC_API_KEY:
-      OPENAI_API_KEY:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-3}
+      USD_TO_KRW_RATE: ${USD_TO_KRW_RATE:-1450}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required}
+      OPENAI_TRANSCRIBE_MODEL: ${OPENAI_TRANSCRIBE_MODEL:-gpt-4o-transcribe-diarize}
+      OPENAI_REPORT_MODEL: ${OPENAI_REPORT_MODEL:-gpt-4o-mini}
+      OPENAI_TRANSCRIBE_LANGUAGE: ${OPENAI_TRANSCRIBE_LANGUAGE:-}
+      OPENAI_TRANSCRIBE_TIMEOUT_SECONDS: ${OPENAI_TRANSCRIBE_TIMEOUT_SECONDS:-180}
+      OPENAI_REPORT_TIMEOUT_SECONDS: ${OPENAI_REPORT_TIMEOUT_SECONDS:-150}
+      ENCOUNTER_JOB_TIMEOUT_SECONDS: ${ENCOUNTER_JOB_TIMEOUT_SECONDS:-420}
+      SUPABASE_URL: ${SUPABASE_URL:?SUPABASE_URL is required}
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:?SUPABASE_SECRET_KEY is required}
+      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-encounter-audio}
+      TEAM310_RESET_DB_ON_BOOTSTRAP: ${TEAM310_RESET_DB_ON_BOOTSTRAP:-false}
 
 networks:
   default:

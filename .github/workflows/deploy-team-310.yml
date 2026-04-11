@@ -20,8 +20,11 @@ jobs:
       TEAM_310_DATABASE_URL: ${{ secrets.TEAM_310_DATABASE_URL }}
       TEAM_310_JWT_SECRET_KEY: ${{ secrets.TEAM_310_JWT_SECRET_KEY }}
       TEAM_310_RESEND_API_KEY: ${{ secrets.TEAM_310_RESEND_API_KEY }}
+      TEAM_310_SUPABASE_URL: ${{ secrets.TEAM_310_SUPABASE_URL }}
+      TEAM_310_SUPABASE_SECRET_KEY: ${{ secrets.TEAM_310_SUPABASE_SECRET_KEY }}
       TEAM_310_ANTHROPIC_API_KEY: ${{ secrets.TEAM_310_ANTHROPIC_API_KEY }}
       TEAM_310_OPENAI_API_KEY: ${{ secrets.TEAM_310_OPENAI_API_KEY }}
+      TEAM_310_IMAGE_TAG: ${{ vars.TEAM_310_IMAGE_TAG || 'main' }}
       TEAM_310_GHCR_USERNAME: ${{ secrets.TEAM_310_GHCR_USERNAME }}
       TEAM_310_GHCR_TOKEN: ${{ secrets.TEAM_310_GHCR_TOKEN }}
     steps:
@@ -33,18 +36,26 @@ jobs:
           test -n "$DEPLOY_USER"
           test -n "$DEPLOY_SSH_KEY"
 
-      - name: Validate team-310 secrets
+      - name: Validate team-310 settings
         run: |
           test -n "$TEAM_310_DATABASE_URL"
           test -n "$TEAM_310_JWT_SECRET_KEY"
           test -n "$TEAM_310_RESEND_API_KEY"
-          test -n "$TEAM_310_ANTHROPIC_API_KEY"
+          test -n "$TEAM_310_SUPABASE_URL"
+          test -n "$TEAM_310_SUPABASE_SECRET_KEY"
           test -n "$TEAM_310_OPENAI_API_KEY"
-          test -n "$TEAM_310_GHCR_USERNAME"
-          test -n "$TEAM_310_GHCR_TOKEN"
+          test -n "$TEAM_310_IMAGE_TAG"
           jwt_bytes=$(printf '%s' "$TEAM_310_JWT_SECRET_KEY" | wc -c)
           if [ "$jwt_bytes" -lt 32 ]; then
             echo "TEAM_310_JWT_SECRET_KEY must be at least 32 bytes" >&2
+            exit 1
+          fi
+          if [ -n "$TEAM_310_GHCR_USERNAME" ] && [ -z "$TEAM_310_GHCR_TOKEN" ]; then
+            echo "TEAM_310_GHCR_TOKEN is required when TEAM_310_GHCR_USERNAME is set" >&2
+            exit 1
+          fi
+          if [ -n "$TEAM_310_GHCR_TOKEN" ] && [ -z "$TEAM_310_GHCR_USERNAME" ]; then
+            echo "TEAM_310_GHCR_USERNAME is required when TEAM_310_GHCR_TOKEN is set" >&2
             exit 1
           fi
 
@@ -67,6 +78,7 @@ jobs:
       - name: Write .env
         run: |
           {
+            printf 'TEAM_310_IMAGE_TAG=%s\n' "$TEAM_310_IMAGE_TAG"
             printf 'FRONTEND_HOST_PORT=3310\n'
             printf 'BACKEND_HOST_PORT=8310\n'
             printf 'BACKEND_PORT=8310\n'
@@ -79,14 +91,26 @@ jobs:
             printf 'JWT_EXPIRE_MINUTES=60\n'
             printf 'RESEND_API_KEY=%s\n' "$TEAM_310_RESEND_API_KEY"
             printf 'RESEND_FROM=noreply@sejongclass.kr\n'
+            printf 'FRONTEND_APP_URL=https://huposit.kr\n'
+            printf 'SUPABASE_URL=%s\n' "$TEAM_310_SUPABASE_URL"
+            printf 'SUPABASE_SECRET_KEY=%s\n' "$TEAM_310_SUPABASE_SECRET_KEY"
+            printf 'SUPABASE_STORAGE_BUCKET=encounter-audio\n'
+            printf 'TEAM310_RESET_DB_ON_BOOTSTRAP=false\n'
             printf 'POLL_INTERVAL_SECONDS=3\n'
             printf 'USD_TO_KRW_RATE=1450\n'
             printf 'ANTHROPIC_API_KEY=%s\n' "$TEAM_310_ANTHROPIC_API_KEY"
             printf 'OPENAI_API_KEY=%s\n' "$TEAM_310_OPENAI_API_KEY"
+            printf 'OPENAI_TRANSCRIBE_MODEL=gpt-4o-transcribe-diarize\n'
+            printf 'OPENAI_REPORT_MODEL=gpt-4o-mini\n'
+            printf 'OPENAI_TRANSCRIBE_LANGUAGE=\n'
+            printf 'OPENAI_TRANSCRIBE_TIMEOUT_SECONDS=180\n'
+            printf 'OPENAI_REPORT_TIMEOUT_SECONDS=150\n'
+            printf 'ENCOUNTER_JOB_TIMEOUT_SECONDS=420\n'
           } > /tmp/team-310.env
           scp /tmp/team-310.env "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/team-310/.env"
 
       - name: Log in to GHCR on remote host
+        if: ${{ env.TEAM_310_GHCR_USERNAME != '' && env.TEAM_310_GHCR_TOKEN != '' }}
         run: |
           printf '%s' "$TEAM_310_GHCR_TOKEN" | ssh "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io -u '$TEAM_310_GHCR_USERNAME' --password-stdin"
 
