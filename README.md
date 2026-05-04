@@ -32,9 +32,15 @@ This file is gitignored; the tracking template lives at the root `.env.example`.
   - Compose, container, and runtime naming use `team-310`.
   - Caddy publishes `huposit.kr`, routing `/api` to the backend and other traffic to the frontend.
   - Current upstream images are expected to include the `/api` frontend base and `/api/auth/*` backend routes introduced by `d6cac06`.
+- `somameet/`
+  - Frontend and backend are pulled from the `SomaMeet_Sejong` app repo's GHCR images.
+  - Compose, container, and runtime naming use `somameet`.
+  - Includes an internal Postgres service with a named volume and no host port.
+  - Caddy publishes `somameet.sejongclass.kr` to the frontend; the frontend nginx image proxies `/api/` to the backend inside the compose network.
 - `caddy/`
   - `vue-spring.huposit.kr`
   - `rr7-fullstack.sejongclass.kr`
+  - `somameet.sejongclass.kr`
   - `asm17.huposit.kr`
   - `huposit.kr`
   - Shared reverse proxy that routes the above domains to localhost ports.
@@ -50,6 +56,8 @@ This file is gitignored; the tracking template lives at the root `.env.example`.
 - App stacks bind to localhost ports only; Caddy is the sole public-facing component.
 - `vue-spring` keeps app defaults in the image; Compose handles deployment wiring only.
 - `rr7-fullstack` assembles its runtime env from `.env.example + root .env`.
+- `somameet` stores Postgres data in a named Docker volume and publishes only its frontend localhost port.
+- DNS for `somameet.sejongclass.kr` must point at the deployment server before public traffic works.
 
 ## References
 
@@ -57,5 +65,6 @@ This file is gitignored; the tracking template lives at the root `.env.example`.
 - `rr7-fullstack` deployment notes: `rr7-fullstack/README.md`
 - `team-fit` deployment notes: `team-fit/README.md`
 - `team-310` deployment notes: `team-310/README.md`
+- `somameet` deployment notes: `somameet/README.md`
 - `caddy` deployment notes: `caddy/README.md`
 - Automation/context documentation: `AGENTS.md`

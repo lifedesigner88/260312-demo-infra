@@ -34,6 +34,17 @@
 - 앱 비시크릿 값은 `rr7-fullstack/.env.example`에 둔다.
 - 4개 공통 시크릿은 루트 `../.env`에서 읽는다.
 
+### somameet
+
+- 위치: `somameet/`
+- 구성: `postgres`, `backend`, `frontend`
+- 앱 이미지는 `SomaMeet_Sejong` 앱 repo의 GHCR 이미지에서 pull 한다.
+- `postgres`는 외부 host port를 publish하지 않고 named volume으로 영속화한다.
+- `backend`는 host port를 publish하지 않고 compose 내부 `postgres:5432`에 접속한다.
+- `backend`는 `postgres` healthcheck를 기다린 뒤 시작해야 한다.
+- 외부 공개는 frontend 하나만 보고, `/api/`는 frontend nginx가 내부 `backend:8410/api/`로 프록시한다.
+- CORS/Origin 값은 `https://somameet.sejongclass.kr` 기준으로 맞춘다.
+
 ### caddy
 
 - 위치: `caddy/`
@@ -41,6 +52,7 @@
 - 라우팅 대상:
   - `vue-spring.huposit.kr` -> `vue-spring frontend`
   - `rr7-fullstack.sejongclass.kr` -> `rr7-fullstack app`
+  - `somameet.sejongclass.kr` -> `somameet frontend`
   - `asm17.huposit.kr` -> `team-fit frontend`
   - `huposit.kr` -> `team-310 frontend`
 - Caddy는 host network를 사용하고 localhost에만 바인딩된 각 서비스 포트를 프록시한다.
@@ -65,10 +77,15 @@
   - `DEMO_SUPABASE_KEY`
 - 선택 변수:
   - `DEPLOY_BASE_DIR`
+- SomaMeet 시크릿/변수:
+  - `SOMAMEET_OPENAI_API_KEY`
+  - `SOMAMEET_IMAGE_TAG` (선택 변수, 기본 `main`)
 
 ## 수정 시 주의
 
 - `vue-spring/compose.yaml`의 seed 순서는 깨지면 안 된다.
 - `vue-spring`은 앱 기본 설정을 이미지에 두고, compose에는 배포 wiring과 필요한 infra 고정값만 남긴다.
+- `somameet/compose.yaml`의 Postgres는 host port를 publish하면 안 된다.
+- `somameet` GHCR package는 public이라 원격 서버 `docker login`을 배포 workflow에 넣지 않는다.
 - 루트 `.env`는 실제 값이 들어가므로 커밋하지 않는다.
 - `caddy/Caddyfile`을 바꿀 때는 서비스 host port와 함께 봐야 한다.

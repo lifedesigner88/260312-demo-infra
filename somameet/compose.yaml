@@ -1,0 +1,46 @@
+name: somameet
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: somameet-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: somameet_sejong
+      POSTGRES_USER: somameet
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-somameet-demo-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  backend:
+    image: ghcr.io/soma17th-ai31/somameet_sejong-backend:${SOMAMEET_IMAGE_TAG:-main}
+    container_name: somameet-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://somameet:${POSTGRES_PASSWORD:-somameet-demo-password}@postgres:5432/somameet_sejong
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-https://somameet.sejongclass.kr}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Seoul}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.4-mini}
+
+  frontend:
+    image: ghcr.io/soma17th-ai31/somameet_sejong-frontend:${SOMAMEET_IMAGE_TAG:-main}
+    container_name: somameet-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-3410}:80"
+
+volumes:
+  postgres_data:

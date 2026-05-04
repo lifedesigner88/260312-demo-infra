@@ -15,7 +15,7 @@ jobs:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      DEPLOY_BASE_DIR: ${{ vars.DEPLOY_BASE_DIR || '/opt/260312-demo-infra' }}
+      DEPLOY_BASE_DIR: ${{ vars['DEPLOY_BASE_DIR'] || '/opt/260312-demo-infra' }}
     steps:
       - uses: actions/checkout@v4
 

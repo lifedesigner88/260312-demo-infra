@@ -16,7 +16,7 @@ jobs:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      DEPLOY_BASE_DIR: ${{ vars.DEPLOY_BASE_DIR || '/opt/260312-demo-infra' }}
+      DEPLOY_BASE_DIR: ${{ vars['DEPLOY_BASE_DIR'] || '/opt/260312-demo-infra' }}
       TEAM_310_DATABASE_URL: ${{ secrets.TEAM_310_DATABASE_URL }}
       TEAM_310_JWT_SECRET_KEY: ${{ secrets.TEAM_310_JWT_SECRET_KEY }}
       TEAM_310_RESEND_API_KEY: ${{ secrets.TEAM_310_RESEND_API_KEY }}
@@ -24,7 +24,7 @@ jobs:
       TEAM_310_SUPABASE_SECRET_KEY: ${{ secrets.TEAM_310_SUPABASE_SECRET_KEY }}
       TEAM_310_ANTHROPIC_API_KEY: ${{ secrets.TEAM_310_ANTHROPIC_API_KEY }}
       TEAM_310_OPENAI_API_KEY: ${{ secrets.TEAM_310_OPENAI_API_KEY }}
-      TEAM_310_IMAGE_TAG: ${{ vars.TEAM_310_IMAGE_TAG || 'main' }}
+      TEAM_310_IMAGE_TAG: ${{ vars['TEAM_310_IMAGE_TAG'] || 'main' }}
       TEAM_310_GHCR_USERNAME: ${{ secrets.TEAM_310_GHCR_USERNAME }}
       TEAM_310_GHCR_TOKEN: ${{ secrets.TEAM_310_GHCR_TOKEN }}
     steps:

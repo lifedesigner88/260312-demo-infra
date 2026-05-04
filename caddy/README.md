@@ -4,6 +4,7 @@ Shared reverse proxy deployment folder.
 
 - `vue-spring.huposit.kr` -> `vue-spring frontend`
 - `rr7-fullstack.sejongclass.kr` -> `rr7-fullstack app`
+- `somameet.sejongclass.kr` -> `somameet frontend`; the frontend proxies `/api/` to its backend inside the `somameet` compose network
 - `asm17.huposit.kr` -> `team-fit frontend` with `/api` routed to `team-fit backend`
 - `huposit.kr` -> `team-310 frontend` with `/api` and `/api/*` routed to `team-310 backend` without stripping the `/api` prefix
 
@@ -16,4 +17,4 @@ docker compose pull
 docker compose up -d
 ```
 
-Caddy uses host networking, so each app stack must already be running on its localhost port before starting Caddy.
+Caddy uses host networking, so each app stack must already be running on its localhost port before starting Caddy. DNS for `somameet.sejongclass.kr` must point at the deployment server before the SomaMeet route can serve public traffic.

@@ -15,7 +15,7 @@ jobs:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      DEPLOY_BASE_DIR: ${{ vars.DEPLOY_BASE_DIR || '/opt/260312-demo-infra' }}
+      DEPLOY_BASE_DIR: ${{ vars['DEPLOY_BASE_DIR'] || '/opt/260312-demo-infra' }}
       SEJONG_SECRET_KEY: ${{ secrets.SEJONG_SECRET_KEY }}
       RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
       DEMO_DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL }}

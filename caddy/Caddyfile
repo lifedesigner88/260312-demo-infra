@@ -8,6 +8,11 @@
 	reverse_proxy 127.0.0.1:{$RR7_FULLSTACK_HOST_PORT}
 }
 
+{$SOMAMEET_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:{$SOMAMEET_FRONTEND_HOST_PORT}
+}
+
 {$TEAM_FIT_DOMAIN} {
 	encode zstd gzip
 

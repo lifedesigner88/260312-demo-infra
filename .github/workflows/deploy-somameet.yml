@@ -1,0 +1,66 @@
+name: Deploy somameet
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types:
+      - deploy-somameet
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_BASE_DIR: ${{ vars['DEPLOY_BASE_DIR'] || '/opt/260312-demo-infra' }}
+      SOMAMEET_IMAGE_TAG: ${{ vars['SOMAMEET_IMAGE_TAG'] || 'main' }}
+      SOMAMEET_OPENAI_API_KEY: ${{ secrets.SOMAMEET_OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate SSH settings
+        run: |
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+
+      - name: Validate somameet settings
+        run: |
+          test -n "$SOMAMEET_IMAGE_TAG"
+          test -n "$SOMAMEET_OPENAI_API_KEY"
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Prepare remote directory
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_BASE_DIR' '$DEPLOY_BASE_DIR/somameet'"
+
+      - name: Sync somameet files
+        run: |
+          rsync -az --delete somameet/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/somameet/"
+
+      - name: Write .env
+        run: |
+          {
+            printf 'SOMAMEET_IMAGE_TAG=%s\n' "$SOMAMEET_IMAGE_TAG"
+            printf 'FRONTEND_HOST_PORT=3410\n'
+            printf 'POSTGRES_PASSWORD=somameet-demo-password\n'
+            printf 'FRONTEND_ORIGIN=https://somameet.sejongclass.kr\n'
+            printf 'APP_TIMEZONE=Asia/Seoul\n'
+            printf 'OPENAI_API_KEY=%s\n' "$SOMAMEET_OPENAI_API_KEY"
+            printf 'OPENAI_MODEL=gpt-5.4-mini\n'
+          } > /tmp/somameet.env
+          scp /tmp/somameet.env "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_BASE_DIR/somameet/.env"
+
+      - name: Deploy somameet
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_BASE_DIR/somameet' && docker compose pull && docker compose up -d"

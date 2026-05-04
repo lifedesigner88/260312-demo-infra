@@ -15,7 +15,7 @@ jobs:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      DEPLOY_BASE_DIR: ${{ vars.DEPLOY_BASE_DIR || '/opt/260312-demo-infra' }}
+      DEPLOY_BASE_DIR: ${{ vars['DEPLOY_BASE_DIR'] || '/opt/260312-demo-infra' }}
       TEAM_FIT_DATABASE_URL: ${{ secrets.TEAM_FIT_DATABASE_URL }}
       TEAM_FIT_JWT_SECRET_KEY: ${{ secrets.TEAM_FIT_JWT_SECRET_KEY }}
       TEAM_FIT_ANTHROPIC_API_KEY: ${{ secrets.TEAM_FIT_ANTHROPIC_API_KEY }}
